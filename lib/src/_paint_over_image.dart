@@ -7,6 +7,7 @@ import 'package:flutter/material.dart' hide Image;
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
+import '../main.dart';
 import '_image_painter.dart';
 import '_ported_interactive_viewer.dart';
 import 'widgets/_color_widget.dart';
@@ -25,6 +26,7 @@ class ImagePainter extends StatefulWidget {
     this.byteArray,
     this.file,
     this.height,
+    this.backgroundUrl,
     this.width,
     this.placeHolder,
     this.isScalable,
@@ -43,6 +45,7 @@ class ImagePainter extends StatefulWidget {
       {@required Key key,
       double height,
       double width,
+      String backgroundUrl,
       Widget placeholderWidget,
       bool scalable,
       List<Color> colors,
@@ -57,6 +60,7 @@ class ImagePainter extends StatefulWidget {
       width: width,
       isScalable: scalable ?? false,
       placeHolder: placeholderWidget,
+      backgroundUrl: backgroundUrl,
       colors: colors,
       brushIcon: brushIcon,
       undoIcon: undoIcon,
@@ -174,6 +178,9 @@ class ImagePainter extends StatefulWidget {
 
   ///Only accessible through [ImagePainter.network] constructor.
   final String networkUrl;
+
+  ///Only accessible through [ImagePainter.network] constructor.
+  final String backgroundUrl;
 
   ///Only accessible through [ImagePainter.memory] constructor.
   final Uint8List byteArray;
@@ -371,23 +378,28 @@ class ImagePainterState extends State<ImagePainter> {
                           _scaleUpdateGesture(details, controller),
                       onInteractionEnd: (details) =>
                           _scaleEndGesture(details, controller),
-                      child: Opacity(
-                        opacity: .99,
-                        child: CustomPaint(
-                          size: Size(
-                              _image.width.toDouble(), _image.height.toDouble()),
-                          willChange: true,
-                          isComplex: true,
-                          painter: DrawImage(
-                            image: _image,
-                            points: _points,
-                            paintHistory: _paintHistory,
-                            isDragging: _inDrag,
-                            update: UpdatePoints(
-                                start: _start,
-                                end: _end,
-                                painter: _painter,
-                                mode: controller.mode),
+                      child: Container(
+                        decoration: BoxDecoration(
+                            image: DecorationImage(
+                                image: NetworkImage(widget.backgroundUrl), fit: BoxFit.fill)),
+                        child: Opacity(
+                          opacity: .99,
+                          child: CustomPaint(
+                            size: Size(_image.width.toDouble(),
+                                _image.height.toDouble()),
+                            willChange: true,
+                            isComplex: true,
+                            painter: DrawImage(
+                              image: _image,
+                              points: _points,
+                              paintHistory: _paintHistory,
+                              isDragging: _inDrag,
+                              update: UpdatePoints(
+                                  start: _start,
+                                  end: _end,
+                                  painter: _painter,
+                                  mode: controller.mode),
+                            ),
                           ),
                         ),
                       ),
@@ -423,22 +435,30 @@ class ImagePainterState extends State<ImagePainter> {
                     _scaleUpdateGesture(details, controller),
                 onInteractionEnd: (details) =>
                     _scaleEndGesture(details, controller),
-                child: Opacity(
-                  opacity: .99,
-                  child: CustomPaint(
-                    willChange: true,
-                    isComplex: true,
-                    painter: DrawImage(
-                      isSignature: true,
-                      backgroundColor: widget.signatureBackgroundColor,
-                      points: _points,
-                      paintHistory: _paintHistory,
-                      isDragging: _inDrag,
-                      update: UpdatePoints(
-                          start: _start,
-                          end: _end,
-                          painter: _painter,
-                          mode: controller.mode),
+                child: Container(
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                      image: NetworkImage(widget.backgroundUrl),
+                      fit: BoxFit.fill,
+                    ),
+                  ),
+                  child: Opacity(
+                    opacity: .99,
+                    child: CustomPaint(
+                      willChange: true,
+                      isComplex: true,
+                      painter: DrawImage(
+                        isSignature: true,
+                        backgroundColor: widget.signatureBackgroundColor,
+                        points: _points,
+                        paintHistory: _paintHistory,
+                        isDragging: _inDrag,
+                        update: UpdatePoints(
+                            start: _start,
+                            end: _end,
+                            painter: _painter,
+                            mode: controller.mode),
+                      ),
                     ),
                   ),
                 ),
