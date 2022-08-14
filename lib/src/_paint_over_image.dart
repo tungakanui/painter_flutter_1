@@ -737,7 +737,7 @@ class ImagePainterState extends State<ImagePainter> {
                 widget.brushIcon ?? Icon(Icons.brush, color: Colors.grey[700]),
             itemBuilder: (_) => [_showRangeSlider()],
           ),
-          IconButton(icon: Icon(Icons.text_format), onPressed: _openTextDialog),
+          // IconButton(icon: Icon(Icons.text_format), onPressed: _openTextDialog),
           const Spacer(),
           IconButton(
               tooltip: "Undo",
@@ -782,7 +782,7 @@ class Controller {
   const Controller(
       {this.strokeWidth = 4.0,
       this.color = Colors.red,
-      this.mode = PaintMode.line,
+      this.mode = PaintMode.freeStyle,
       this.paintStyle = PaintingStyle.stroke,
       this.text = ""});
 
