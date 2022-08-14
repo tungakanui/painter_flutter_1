@@ -38,6 +38,7 @@ class ImagePainter extends StatefulWidget {
     this.controlsAtTop = true,
     this.signatureBackgroundColor,
     this.colors,
+    this.backgroundImage,
   }) : super(key: key);
 
   ///Constructor for loading image from network url.
@@ -102,6 +103,7 @@ class ImagePainter extends StatefulWidget {
       double height,
       double width,
       bool scalable,
+        File backgroundImage,
       Widget placeholderWidget,
       List<Color> colors,
       Widget brushIcon,
@@ -191,6 +193,9 @@ class ImagePainter extends StatefulWidget {
   ///Only accessible through [ImagePainter.asset] constructor.
   final String assetPath;
 
+  ///  Image background
+  final File backgroundImage;
+
   ///Height of the Widget. Image is subjected to fit within the given height.
   final double height;
 
@@ -237,6 +242,7 @@ class ImagePainter extends StatefulWidget {
 class ImagePainterState extends State<ImagePainter> {
   final _repaintKey = GlobalKey();
   ui.Image _image;
+  ui.Image _backgroundImage;
   bool _inDrag = false;
   final _controller = ValueNotifier<Controller>(null);
   final _isLoaded = ValueNotifier<bool>(false);
@@ -267,6 +273,42 @@ class ImagePainterState extends State<ImagePainter> {
     ..style = _controller.value.mode == PaintMode.dashLine
         ? PaintingStyle.stroke
         : _controller.value.paintStyle;
+
+  Future<void> _resolveAndConvertBackgroundImage() async {
+    if (widget.backgroundImage != null) {
+      _backgroundImage = await _loadNetworkImage(widget.networkUrl);
+      if (_backgroundImage == null) {
+        throw ("${widget.networkUrl} couldn't be resolved.");
+      } else {
+        _setStrokeMultiplier();
+      }
+    }  else if (widget.assetPath != null) {
+      final img = await rootBundle.load(widget.assetPath);
+      _backgroundImage = await _convertImage(Uint8List.view(img.buffer));
+      if (_backgroundImage == null) {
+        throw ("${widget.assetPath} couldn't be resolved.");
+      } else {
+        _setStrokeMultiplier();
+      }
+    } else if (widget.file != null) {
+      final img = await widget.file.readAsBytes();
+      _backgroundImage = await _convertImage(img);
+      if (_backgroundImage == null) {
+        throw ("Image couldn't be resolved from provided file.");
+      } else {
+        _setStrokeMultiplier();
+      }
+    } else if (widget.byteArray != null) {
+      _backgroundImage = await _convertImage(widget.byteArray);
+      if (_backgroundImage == null) {
+        throw ("Image couldn't be resolved from provided byteArray.");
+      } else {
+        _setStrokeMultiplier();
+      }
+    } else {
+      _isLoaded.value = true;
+    }
+  }
 
   ///Converts the incoming image type from constructor to [ui.Image]
   Future<void> _resolveAndConvertImage() async {
@@ -381,7 +423,7 @@ class ImagePainterState extends State<ImagePainter> {
                       child: Container(
                         decoration: BoxDecoration(
                             image: DecorationImage(
-                                image: NetworkImage(widget.backgroundUrl), fit: BoxFit.fill)),
+                                image: _backgroundImage, fit: BoxFit.fill)),
                         child: Opacity(
                           opacity: .99,
                           child: CustomPaint(
