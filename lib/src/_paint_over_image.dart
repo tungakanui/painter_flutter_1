@@ -132,6 +132,7 @@ class ImagePainter extends StatefulWidget {
       double width,
       bool scalable,
       Widget placeholderWidget,
+        ui.Image backgroundImage,
       List<Color> colors,
       Widget brushIcon,
       Widget undoIcon,
@@ -140,6 +141,7 @@ class ImagePainter extends StatefulWidget {
     return ImagePainter._(
       key: key,
       byteArray: byteArray,
+      backgroundImage: backgroundImage,
       height: height,
       width: width,
       placeHolder: placeholderWidget,
