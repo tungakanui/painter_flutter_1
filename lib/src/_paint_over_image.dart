@@ -103,7 +103,7 @@ class ImagePainter extends StatefulWidget {
       double height,
       double width,
       bool scalable,
-        File backgroundImage,
+        ui.Image backgroundImage,
       Widget placeholderWidget,
       List<Color> colors,
       Widget brushIcon,
@@ -194,7 +194,7 @@ class ImagePainter extends StatefulWidget {
   final String assetPath;
 
   ///  Image background
-  final File backgroundImage;
+  final ui.Image backgroundImage;
 
   ///Height of the Widget. Image is subjected to fit within the given height.
   final double height;
@@ -254,6 +254,7 @@ class ImagePainterState extends State<ImagePainter> {
   @override
   void initState() {
     super.initState();
+    _resolveAndConvertBackgroundImage();
     _resolveAndConvertImage();
     _controller.value = Controller();
     _textController = TextEditingController();
@@ -290,9 +291,8 @@ class ImagePainterState extends State<ImagePainter> {
       } else {
         _setStrokeMultiplier();
       }
-    } else if (widget.file != null) {
-      final img = await widget.file.readAsBytes();
-      _backgroundImage = await _convertImage(img);
+    } else if (widget.backgroundImage != null) {
+      _backgroundImage = widget.backgroundImage;
       if (_backgroundImage == null) {
         throw ("Image couldn't be resolved from provided file.");
       } else {
@@ -480,7 +480,7 @@ class ImagePainterState extends State<ImagePainter> {
                 child: Container(
                   decoration: BoxDecoration(
                     image: DecorationImage(
-                      image: NetworkImage(widget.backgroundUrl),
+                      image: _backgroundImage,
                       fit: BoxFit.fill,
                     ),
                   ),
