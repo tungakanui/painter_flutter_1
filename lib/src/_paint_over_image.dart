@@ -27,6 +27,7 @@ class ImagePainter extends StatefulWidget {
     this.file,
     this.height,
     this.backgroundUrl,
+    this.controller,
     this.width,
     this.placeHolder,
     this.isScalable,
@@ -49,6 +50,7 @@ class ImagePainter extends StatefulWidget {
       String backgroundUrl,
       Widget placeholderWidget,
       bool scalable,
+      PaintController controller,
       List<Color> colors,
       Widget brushIcon,
       Widget undoIcon,
@@ -58,6 +60,7 @@ class ImagePainter extends StatefulWidget {
       key: key,
       networkUrl: url,
       height: height,
+      controller: controller,
       width: width,
       isScalable: scalable ?? false,
       placeHolder: placeholderWidget,
@@ -81,10 +84,12 @@ class ImagePainter extends StatefulWidget {
       Widget brushIcon,
       Widget undoIcon,
       Widget clearAllIcon,
+      PaintController controller,
       Widget colorIcon}) {
     return ImagePainter._(
       key: key,
       assetPath: path,
+      controller: controller,
       height: height,
       width: width,
       isScalable: scalable ?? false,
@@ -103,7 +108,8 @@ class ImagePainter extends StatefulWidget {
       double height,
       double width,
       bool scalable,
-        ui.Image backgroundImage,
+      ui.Image backgroundImage,
+      PaintController controller,
       Widget placeholderWidget,
       List<Color> colors,
       Widget brushIcon,
@@ -118,6 +124,7 @@ class ImagePainter extends StatefulWidget {
       placeHolder: placeholderWidget,
       colors: colors,
       isScalable: scalable ?? false,
+      controller: controller,
       brushIcon: brushIcon,
       undoIcon: undoIcon,
       colorIcon: colorIcon,
@@ -132,8 +139,9 @@ class ImagePainter extends StatefulWidget {
       double width,
       bool scalable,
       Widget placeholderWidget,
-        ui.Image backgroundImage,
+      ui.Image backgroundImage,
       List<Color> colors,
+      PaintController controller,
       Widget brushIcon,
       Widget undoIcon,
       Widget clearAllIcon,
@@ -142,6 +150,7 @@ class ImagePainter extends StatefulWidget {
       key: key,
       byteArray: byteArray,
       backgroundImage: backgroundImage,
+      controller: controller,
       height: height,
       width: width,
       placeHolder: placeholderWidget,
@@ -164,12 +173,14 @@ class ImagePainter extends StatefulWidget {
       Widget brushIcon,
       Widget undoIcon,
       Widget clearAllIcon,
+      PaintController controller,
       Widget colorIcon}) {
     return ImagePainter._(
       key: key,
       height: height,
       width: width,
       isSignature: true,
+      controller: controller,
       isScalable: false,
       colors: colors,
       signatureBackgroundColor: signatureBgColor ?? Colors.white,
@@ -179,6 +190,9 @@ class ImagePainter extends StatefulWidget {
       clearAllIcon: clearAllIcon,
     );
   }
+
+  ///Controller of the Painter
+  final PaintController controller;
 
   ///Only accessible through [ImagePainter.network] constructor.
   final String networkUrl;
@@ -246,7 +260,7 @@ class ImagePainterState extends State<ImagePainter> {
   ui.Image _image;
   ui.Image _backgroundImage;
   bool _inDrag = false;
-  final _controller = ValueNotifier<Controller>(null);
+  final _controller = ValueNotifier<PaintController>(null);
   final _isLoaded = ValueNotifier<bool>(false);
   final _paintHistory = <PaintInfo>[];
   final _points = <Offset>[];
@@ -258,8 +272,18 @@ class ImagePainterState extends State<ImagePainter> {
     super.initState();
     _resolveAndConvertBackgroundImage();
     _resolveAndConvertImage();
-    _controller.value = Controller();
+    _controller.value = widget.controller ?? PaintController();
     _textController = TextEditingController();
+  }
+
+  @override
+  void didUpdateWidget(ImagePainter oldWidget) {
+    if (oldWidget.controller != widget.controller) {
+      setState(() {
+        _controller.value = widget.controller;
+      });
+    }
+    super.didUpdateWidget(oldWidget);
   }
 
   @override
@@ -285,7 +309,7 @@ class ImagePainterState extends State<ImagePainter> {
       } else {
         _setStrokeMultiplier();
       }
-    }  else if (widget.assetPath != null) {
+    } else if (widget.assetPath != null) {
       final img = await rootBundle.load(widget.assetPath);
       _backgroundImage = await _convertImage(Uint8List.view(img.buffer));
       if (_backgroundImage == null) {
@@ -410,7 +434,7 @@ class ImagePainterState extends State<ImagePainter> {
             child: FittedBox(
               alignment: FractionalOffset.center,
               child: ClipRect(
-                child: ValueListenableBuilder<Controller>(
+                child: ValueListenableBuilder<PaintController>(
                   valueListenable: _controller,
                   builder: (_, controller, __) {
                     return ImagePainterTransformer(
@@ -467,7 +491,7 @@ class ImagePainterState extends State<ImagePainter> {
         child: Container(
           width: widget.width ?? double.maxFinite,
           height: widget.height ?? double.maxFinite,
-          child: ValueListenableBuilder<Controller>(
+          child: ValueListenableBuilder<PaintController>(
             valueListenable: _controller,
             builder: (_, controller, __) {
               return ImagePainterTransformer(
@@ -514,7 +538,7 @@ class ImagePainterState extends State<ImagePainter> {
     );
   }
 
-  _scaleStartGesture(ScaleStartDetails onStart, Controller controller) {
+  _scaleStartGesture(ScaleStartDetails onStart, PaintController controller) {
     setState(() {
       _start = onStart.focalPoint;
       _points.add(_start);
@@ -522,7 +546,7 @@ class ImagePainterState extends State<ImagePainter> {
   }
 
   ///Fires while user is interacting with the screen to record painting.
-  void _scaleUpdateGesture(ScaleUpdateDetails onUpdate, Controller ctrl) {
+  void _scaleUpdateGesture(ScaleUpdateDetails onUpdate, PaintController ctrl) {
     setState(
       () {
         _inDrag = true;
@@ -542,7 +566,7 @@ class ImagePainterState extends State<ImagePainter> {
   }
 
   ///Fires when user stops interacting with the screen.
-  void _scaleEndGesture(ScaleEndDetails onEnd, Controller controller) {
+  void _scaleEndGesture(ScaleEndDetails onEnd, PaintController controller) {
     setState(() {
       _inDrag = false;
       if (_start != null &&
@@ -589,7 +613,7 @@ class ImagePainterState extends State<ImagePainter> {
         .toImage(size.width.floor(), size.height.floor());
   }
 
-  PopupMenuItem _showOptionsRow(Controller controller) {
+  PopupMenuItem _showOptionsRow(PaintController controller) {
     return PopupMenuItem(
       enabled: false,
       child: Center(
@@ -618,7 +642,7 @@ class ImagePainterState extends State<ImagePainter> {
       enabled: false,
       child: SizedBox(
         width: double.maxFinite,
-        child: ValueListenableBuilder<Controller>(
+        child: ValueListenableBuilder<PaintController>(
           valueListenable: _controller,
           builder: (_, ctrl, __) {
             return RangedSlider(
@@ -632,7 +656,7 @@ class ImagePainterState extends State<ImagePainter> {
     );
   }
 
-  PopupMenuItem _showColorPicker(Controller controller) {
+  PopupMenuItem _showColorPicker(PaintController controller) {
     return PopupMenuItem(
         enabled: false,
         child: Center(
@@ -735,7 +759,7 @@ class ImagePainterState extends State<ImagePainter> {
       color: Colors.grey[200],
       child: Row(
         children: [
-          ValueListenableBuilder<Controller>(
+          ValueListenableBuilder<PaintController>(
               valueListenable: _controller,
               builder: (_, _ctrl, __) {
                 return PopupMenuButton(
@@ -751,7 +775,7 @@ class ImagePainterState extends State<ImagePainter> {
                   itemBuilder: (_) => [_showOptionsRow(_ctrl)],
                 );
               }),
-          ValueListenableBuilder<Controller>(
+          ValueListenableBuilder<PaintController>(
               valueListenable: _controller,
               builder: (_, controller, __) {
                 return PopupMenuButton(
@@ -806,7 +830,7 @@ class ImagePainterState extends State<ImagePainter> {
 
 ///Gives access to manipulate the essential components like [strokeWidth], [Color] and [PaintMode].
 @immutable
-class Controller {
+class PaintController {
   ///Tracks [strokeWidth] of the [Paint] method.
   final double strokeWidth;
 
@@ -822,8 +846,8 @@ class Controller {
   ///Any text.
   final String text;
 
-  ///Constructor of the [Controller] class.
-  const Controller(
+  ///Constructor of the [PaintController] class.
+  const PaintController(
       {this.strokeWidth = 4.0,
       this.color = Colors.red,
       this.mode = PaintMode.freeStyle,
@@ -834,7 +858,7 @@ class Controller {
   bool operator ==(Object o) {
     if (identical(this, o)) return true;
 
-    return o is Controller &&
+    return o is PaintController &&
         o.strokeWidth == strokeWidth &&
         o.color == color &&
         o.paintStyle == paintStyle &&
@@ -852,13 +876,13 @@ class Controller {
   }
 
   ///copyWith Method to access immutable controller.
-  Controller copyWith(
+  PaintController copyWith(
       {double strokeWidth,
       Color color,
       PaintMode mode,
       PaintingStyle paintingStyle,
       String text}) {
-    return Controller(
+    return PaintController(
         strokeWidth: strokeWidth ?? this.strokeWidth,
         color: color ?? this.color,
         mode: mode ?? this.mode,
