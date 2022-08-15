@@ -108,7 +108,7 @@ class ImagePainter extends StatefulWidget {
       double height,
       double width,
       bool scalable,
-      ui.Image backgroundImage,
+        File backgroundImage,
       PaintController controller,
       Widget placeholderWidget,
       List<Color> colors,
@@ -139,7 +139,7 @@ class ImagePainter extends StatefulWidget {
       double width,
       bool scalable,
       Widget placeholderWidget,
-      ui.Image backgroundImage,
+      File backgroundImage,
       List<Color> colors,
       PaintController controller,
       Widget brushIcon,
@@ -210,7 +210,7 @@ class ImagePainter extends StatefulWidget {
   final String assetPath;
 
   ///  Image background
-  final ui.Image backgroundImage;
+  final File backgroundImage;
 
   ///Height of the Widget. Image is subjected to fit within the given height.
   final double height;
@@ -258,7 +258,7 @@ class ImagePainter extends StatefulWidget {
 class ImagePainterState extends State<ImagePainter> {
   final _repaintKey = GlobalKey();
   ui.Image _image;
-  ui.Image _backgroundImage;
+  File _backgroundImage;
   bool _inDrag = false;
   final _controller = ValueNotifier<PaintController>(null);
   final _isLoaded = ValueNotifier<bool>(false);
@@ -267,6 +267,7 @@ class ImagePainterState extends State<ImagePainter> {
   TextEditingController _textController;
   Offset _start, _end;
   int _strokeMultiplier = 1;
+
   @override
   void initState() {
     super.initState();
@@ -303,7 +304,7 @@ class ImagePainterState extends State<ImagePainter> {
 
   Future<void> _resolveAndConvertBackgroundImage() async {
     if (widget.backgroundImage != null) {
-      _backgroundImage = await _loadNetworkImage(widget.networkUrl);
+      _backgroundImage = widget.backgroundImage;
       if (_backgroundImage == null) {
         throw ("${widget.networkUrl} couldn't be resolved.");
       } else {
@@ -311,7 +312,7 @@ class ImagePainterState extends State<ImagePainter> {
       }
     } else if (widget.assetPath != null) {
       final img = await rootBundle.load(widget.assetPath);
-      _backgroundImage = await _convertImage(Uint8List.view(img.buffer));
+      // _backgroundImage = await _convertImage(Uint8List.view(img.buffer));
       if (_backgroundImage == null) {
         throw ("${widget.assetPath} couldn't be resolved.");
       } else {
@@ -325,7 +326,7 @@ class ImagePainterState extends State<ImagePainter> {
         _setStrokeMultiplier();
       }
     } else if (widget.byteArray != null) {
-      _backgroundImage = await _convertImage(widget.byteArray);
+      // _backgroundImage = await _convertImage(widget.byteArray);
       if (_backgroundImage == null) {
         throw ("Image couldn't be resolved from provided byteArray.");
       } else {
@@ -449,7 +450,7 @@ class ImagePainterState extends State<ImagePainter> {
                       child: Container(
                         decoration: BoxDecoration(
                           image: DecorationImage(
-                            image: _backgroundImage,
+                            image: FileImage(_backgroundImage),
                             fit: BoxFit.fill,
                           ),
                         ),
@@ -509,7 +510,7 @@ class ImagePainterState extends State<ImagePainter> {
                 child: Container(
                   decoration: BoxDecoration(
                     image: DecorationImage(
-                      image: _backgroundImage,
+                      image: FileImage(_backgroundImage),
                       fit: BoxFit.fill,
                     ),
                   ),
