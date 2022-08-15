@@ -448,8 +448,11 @@ class ImagePainterState extends State<ImagePainter> {
                           _scaleEndGesture(details, controller),
                       child: Container(
                         decoration: BoxDecoration(
-                            image: DecorationImage(
-                                image: _backgroundImage, fit: BoxFit.fill)),
+                          image: DecorationImage(
+                            image: _backgroundImage,
+                            fit: BoxFit.fill,
+                          ),
+                        ),
                         child: Opacity(
                           opacity: .99,
                           child: CustomPaint(
@@ -846,10 +849,18 @@ class PaintController {
   ///Any text.
   final String text;
 
+  ///Repaint image url
+  final String imageUrl;
+
+  ///Repaint image
+  final ui.Image image;
+
   ///Constructor of the [PaintController] class.
   const PaintController(
       {this.strokeWidth = 4.0,
       this.color = Colors.red,
+      this.imageUrl,
+      this.image,
       this.mode = PaintMode.freeStyle,
       this.paintStyle = PaintingStyle.stroke,
       this.text = ""});
@@ -861,6 +872,8 @@ class PaintController {
     return o is PaintController &&
         o.strokeWidth == strokeWidth &&
         o.color == color &&
+        o.image == image &&
+        o.imageUrl == imageUrl &&
         o.paintStyle == paintStyle &&
         o.mode == mode &&
         o.text == text;
@@ -878,6 +891,8 @@ class PaintController {
   ///copyWith Method to access immutable controller.
   PaintController copyWith(
       {double strokeWidth,
+      String imageUrl,
+      ui.Image image,
       Color color,
       PaintMode mode,
       PaintingStyle paintingStyle,
@@ -885,6 +900,8 @@ class PaintController {
     return PaintController(
         strokeWidth: strokeWidth ?? this.strokeWidth,
         color: color ?? this.color,
+        image: image ?? this.image,
+        imageUrl: imageUrl ?? this.imageUrl,
         mode: mode ?? this.mode,
         paintStyle: paintingStyle ?? paintStyle,
         text: text ?? this.text);
